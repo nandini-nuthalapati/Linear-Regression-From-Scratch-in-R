@@ -1,0 +1,85 @@
+---
+title: "Multiple Linear Regression from Scratch"
+author: "Nandini Nuthalapati"
+date: "February 18, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(width=500)
+```
+```{css}
+pre code, pre, code {
+  white-space: pre !important;
+  overflow-x: scroll !important;
+  word-break: keep-all !important;
+  word-wrap: initial !important;
+}
+```
+#### 1.Import the dataset
+```{r message=FALSE, warning=FALSE }
+library(readr)
+# This dataset contains GPAs of 100 students and other variables such as college, work hours etc.. 
+df<-read.csv("C:/MSBAPM/Fall/Python/Code/Machine Learning/Linear-Regression-From-Scratch/Freshmen.csv")
+# Display top 5 records
+head(df,5)
+```
+#### 2.Check if there are any null values in the dataframe
+```{r message=FALSE, warning=FALSE }
+any(is.na(df)) # There are no null values in the data as shown below
+```
+#### 3.Cross check the data types of all the columns before modeling
+```{r message=FALSE, warning=FALSE}
+sapply(df,typeof) # 'College','Accommodations' and 'Attends Office Hours' need to be changed to categorical
+```
+#### 4.Change the data types of the categorical variables accordingly
+```{r message=FALSE, warning=FALSE}
+df$College=factor(df$College)
+df$Accommodations=factor(df$Accommodations)
+df$Attends.Office.Hours=factor(df$Attends.Office.Hours)
+levels(df$College) # Cross check whether the change was successful?. It was successful as shown below
+```
+#### 5.Generate dummy values of the categorical variables and drop one (i.e. n-1 dummies for n categories)
+```{r message=FALSE, warning=FALSE}
+library(dummies)
+df_dummies=dummy.data.frame(df,sep='_')
+df_dummies[,c('College_Business','Accommodations_Dorm','Attends.Office.Hours_Never')]=list(NULL)
+# The equation of a straight line is y=c+mx where c is the intercept. 
+# When coverted to the matrix form the coefficient of the intercept needs to be 1. 
+# Hence sticking 100 (length of the dataframe) ones to the dataframe
+library(tibble)
+df_dummies=add_column(df_dummies,intercept=rep(1,100),.before= 2)
+# Display top 5 records
+head(df_dummies,5)
+```
+#### 6.Fit lm model
+```{r message=FALSE, warning=FALSE}
+attach(df_dummies)
+model_lm=lm(GPA~Miles.from.Home+College_Engineering+`College_Liberal Arts`+College_Sciences+`College_Social Sciences`+`Accommodations_Off-campus`+Accommodations_Other+Years.Off+Part.Time.Work.Hours+Attends.Office.Hours_Regularly+Attends.Office.Hours_Sometimes+High.School.GPA,data = df_dummies)
+summary(model_lm)
+```
+#### 7.Model without using built in functions
+```{r message=FALSE, warning=FALSE}
+# Convert dataframe into X and Y matrices
+X=as.matrix(df_dummies[,2:length(colnames(df_dummies))])
+Y=as.matrix(df_dummies[,1])
+# Calculate coefficients from (XT.X)-1.XT.Y
+library(MASS)
+coefficients=ginv(t(X)%*%X)%*%t(X)%*%Y
+# Coefficients from the equation
+coefficients
+```
+```{r message=FALSE, warning=FALSE}
+# Coefficients from from the model and equation side by side
+allCoefficients=data.frame(coefficients(model_lm),coefficients)
+# All of them are exactly equal as you can see below
+allCoefficients
+```
+
+
+
+
+
+
+
